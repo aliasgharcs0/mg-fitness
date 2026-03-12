@@ -146,6 +146,9 @@ The backend supports PostgreSQL when **`DATABASE_URL`** is set:
 3. **Backend or DB unreachable**  
    If the Render service is down or `DATABASE_URL` is wrong, the backend may return 500 or not respond. Check Render logs and ensure `DATABASE_URL` is set and the Supabase schema is applied.
 
+4. **`connect ENETUNREACH` in Render logs**  
+   Render often cannot reach Supabase’s **direct** database (port 5432), which can resolve to IPv6 and fail. **Fix:** In Supabase go to **Project Settings → Database**. Under **Connection pooling**, copy the **URI** (Transaction mode, port **6543**). In Render, set **`DATABASE_URL`** to this pooler URI (not the direct “Connection string” URI). Redeploy the backend.
+
 ---
 
 ## 5. Checklist
