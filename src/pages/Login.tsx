@@ -38,20 +38,16 @@ export default function LoginPage() {
         </h1>
       </header>
 
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 relative">
-        {/* Full-bleed background: same image fades in, then blurs/fades toward the right */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 relative overflow-hidden">
+        {/* Full-bleed background: same image fades in behind the entire layout */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-[fade-in_0.8s_ease-out_forwards]"
           style={{ backgroundImage: `url(${gymImages.loginHero})` }}
           aria-hidden
         />
+        {/* Soft dark gradient so text and card stay readable */}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/70"
-          aria-hidden
-        />
-        {/* Right side: blurred so the image softens into the background */}
-        <div
-          className="absolute inset-0 md:left-1/2 backdrop-blur-md bg-background/40"
+          className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/70"
           aria-hidden
         />
 
@@ -68,7 +64,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right panel – sign-in card (solid card again) */}
+        {/* Right panel – sign-in card (solid card) */}
         <div className="flex-1 flex items-center justify-center p-6 md:p-8 relative z-10">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-lg">
             <div className="flex flex-col items-center gap-2 text-center mb-6 md:hidden">
