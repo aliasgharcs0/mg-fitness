@@ -60,7 +60,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ThemeToggle from "@/components/ThemeToggle";
-import { API_BASE as API } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { gymImages } from "@/lib/gymImages";
@@ -318,10 +318,10 @@ export default function GymDashboard() {
         const authHeaders = { Authorization: `Bearer ${token}` };
 
           const [membersRes, programsRes, dietsRes, paymentsRes] = await Promise.all([
-            fetch(`${API}/api/members`, { headers: authHeaders }),
-            fetch(`${API}/api/programs`),
-            fetch(`${API}/api/diet-plans`),
-            fetch(`${API}/api/payments`, { headers: authHeaders }),
+            apiFetch(`/api/members`, { headers: authHeaders }),
+            apiFetch(`/api/programs`),
+            apiFetch(`/api/diet-plans`),
+            apiFetch(`/api/payments`, { headers: authHeaders }),
           ]);
 
         if (!membersRes.ok || !programsRes.ok || !dietsRes.ok || !paymentsRes.ok) {
@@ -415,10 +415,10 @@ export default function GymDashboard() {
           setError(null);
           const authHeaders = { Authorization: `Bearer ${token}` };
           const [meRes, programsRes, dietsRes, paymentsRes] = await Promise.all([
-            fetch(`${API}/api/me`, { headers: authHeaders }),
-            fetch(`${API}/api/programs`),
-            fetch(`${API}/api/diet-plans`),
-            fetch(`${API}/api/payments`, { headers: authHeaders }),
+            apiFetch(`/api/me`, { headers: authHeaders }),
+            apiFetch(`/api/programs`),
+            apiFetch(`/api/diet-plans`),
+            apiFetch(`/api/payments`, { headers: authHeaders }),
           ]);
           if (!meRes.ok || !programsRes.ok || !dietsRes.ok || !paymentsRes.ok) {
             throw new Error("Failed to load data from local API");
@@ -512,10 +512,10 @@ export default function GymDashboard() {
     if (user?.role !== "admin" || !token) return;
     try {
       const [membersRes, programsRes, dietsRes, paymentsRes] = await Promise.all([
-        fetch(`${API}/api/members`, { headers: authHeaders }),
-        fetch(`${API}/api/programs`),
-        fetch(`${API}/api/diet-plans`),
-        fetch(`${API}/api/payments`, { headers: authHeaders }),
+        apiFetch(`/api/members`, { headers: authHeaders }),
+        apiFetch(`/api/programs`),
+        apiFetch(`/api/diet-plans`),
+        apiFetch(`/api/payments`, { headers: authHeaders }),
       ]);
       if (!membersRes.ok || !programsRes.ok || !dietsRes.ok || !paymentsRes.ok) return;
       const [membersJson, programsJson, dietsJson, paymentsJson] = await Promise.all([
@@ -597,7 +597,7 @@ export default function GymDashboard() {
     setAddMemberSubmitting(true);
     setAddMemberError(null);
     try {
-      const res = await fetch(`${API}/api/members`, {
+      const res = await apiFetch(`/api/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
@@ -630,7 +630,7 @@ export default function GymDashboard() {
     async (memberId: number, membership: string) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/members/${memberId}`, {
+        await apiFetch(`/api/members/${memberId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({ membership }),
@@ -651,7 +651,7 @@ export default function GymDashboard() {
     ) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/members/${memberId}`, {
+        await apiFetch(`/api/members/${memberId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({ balance, total_paid: totalPaid }),
@@ -659,7 +659,7 @@ export default function GymDashboard() {
 
         const deltaPaid = (totalPaid ?? 0) - (prevTotalPaid ?? 0);
         if (deltaPaid !== 0) {
-          await fetch(`${API}/api/payments`, {
+          await apiFetch(`/api/payments`, {
             method: "POST",
             headers: { "Content-Type": "application/json", ...authHeaders },
             body: JSON.stringify({
@@ -724,7 +724,7 @@ export default function GymDashboard() {
       if (editMemberForm.newPassword.trim()) {
         body.password = editMemberForm.newPassword.trim();
       }
-      const res = await fetch(`${API}/api/members/${editingMember.id}`, {
+      const res = await apiFetch(`/api/members/${editingMember.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify(body),
@@ -746,7 +746,7 @@ export default function GymDashboard() {
       if (!token || member.balance <= 0) return;
       setMarkingPaidId(member.id);
       try {
-        const res = await fetch(`${API}/api/members/${member.id}`, {
+        const res = await apiFetch(`/api/members/${member.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
@@ -767,7 +767,7 @@ export default function GymDashboard() {
     const memberId = removeMember.id;
     setRemoveMemberSubmitting(true);
     try {
-      const res = await fetch(`${API}/api/members/${memberId}`, {
+      const res = await apiFetch(`/api/members/${memberId}`, {
         method: "DELETE",
         headers: authHeaders,
       });
@@ -797,7 +797,7 @@ export default function GymDashboard() {
     }
     setAddProgramSubmitting(true);
     try {
-      const res = await fetch(`${API}/api/programs`, {
+      const res = await apiFetch(`/api/programs`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
@@ -821,7 +821,7 @@ export default function GymDashboard() {
     async (program: Program) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/programs/${program.id}`, {
+        await apiFetch(`/api/programs/${program.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
@@ -844,7 +844,7 @@ export default function GymDashboard() {
     async (memberId: number, dietPlanId: number | null) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/members/${memberId}`, {
+        await apiFetch(`/api/members/${memberId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({ diet_plan_id: dietPlanId }),
@@ -859,7 +859,7 @@ export default function GymDashboard() {
     if (!token || addDietForm.name.trim() === "") return;
     setAddDietSubmitting(true);
     try {
-      const res = await fetch(`${API}/api/diet-plans`, {
+      const res = await apiFetch(`/api/diet-plans`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
@@ -893,7 +893,7 @@ export default function GymDashboard() {
     async (diet: DietPlan) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/diet-plans/${diet.id}`, {
+        await apiFetch(`/api/diet-plans/${diet.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
@@ -923,7 +923,7 @@ export default function GymDashboard() {
     async (id: number) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/diet-plans/${id}`, {
+        await apiFetch(`/api/diet-plans/${id}`, {
           method: "DELETE",
           headers: authHeaders,
         });
@@ -939,7 +939,7 @@ export default function GymDashboard() {
     async (memberId: number) => {
       if (!token || !medicalEditForm) return;
       try {
-        await fetch(`${API}/api/members/${memberId}`, {
+        await apiFetch(`/api/members/${memberId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
@@ -959,7 +959,7 @@ export default function GymDashboard() {
     async (memberId: number) => {
       if (!token) return;
       try {
-        await fetch(`${API}/api/members/${memberId}`, {
+        await apiFetch(`/api/members/${memberId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify({
@@ -1451,7 +1451,7 @@ export default function GymDashboard() {
                                 <Select
                                   value={String(m.paymentDay ?? 1)}
                                   onValueChange={(v) =>
-                                    fetch(`${API}/api/members/${m.id}`, {
+                                    apiFetch(`/api/members/${m.id}`, {
                                       method: "PATCH",
                                       headers: { "Content-Type": "application/json", ...authHeaders },
                                       body: JSON.stringify({ payment_day: Number(v) || 1 }),

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 type User = {
   id: number;
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string) => {
     let res: Response;
     try {
-      res = await fetch(`${API_BASE}/api/login`, {
+      res = await apiFetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), password: password.trim() }),
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     if (token) {
       try {
-        await fetch(`${API_BASE}/api/logout`, {
+        await apiFetch("/api/logout", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });

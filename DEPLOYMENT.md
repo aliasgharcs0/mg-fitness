@@ -124,7 +124,31 @@ The backend supports PostgreSQL when **`DATABASE_URL`** is set:
 
 ---
 
-## 4. Checklist
+## 4. Troubleshooting: “Login failed” on the deployed app
+
+**Why you see the login page:** The app is supposed to show the login screen when you’re not signed in. The layout (gym image, form on the right) is correct. After a successful login you’re sent to the dashboard.
+
+**Why login fails** (red “Login failed” message) is usually one of these:
+
+1. **Frontend not pointing at the backend (most common)**  
+   The Vite app bakes `VITE_API_URL` into the build. If it’s **missing or wrong on Vercel**, the browser calls the Vercel domain (e.g. `mg-fitness.silk.vercel.app/api/login`) instead of your Render backend, so the request fails and you see “Login failed”.
+
+   **Fix:**  
+   - Vercel → your project → **Settings** → **Environment Variables**.  
+   - Add `VITE_API_URL` = your **Render backend URL** (e.g. `https://mg-fitness-xxxx.onrender.com`), no trailing slash.  
+   - **Redeploy** the frontend (Vite only reads env at build time).
+
+2. **User doesn’t exist in production DB**  
+   The Supabase DB used by Render might be empty or not have the user you’re trying (e.g. `abdulrafay1`). The backend returns 401 and the app shows “Login failed”.
+
+   **Fix:** Create the user in Supabase (e.g. run seed SQL or use your app’s “Add member” as admin). If you have a seed script or `supabase/schema.sql` that inserts an admin, run it in Supabase SQL Editor.
+
+3. **Backend or DB unreachable**  
+   If the Render service is down or `DATABASE_URL` is wrong, the backend may return 500 or not respond. Check Render logs and ensure `DATABASE_URL` is set and the Supabase schema is applied.
+
+---
+
+## 5. Checklist
 
 - [ ] Repo on GitHub (no `.env` or `node_modules` committed).  
 - [ ] Supabase project created; schema run in SQL Editor (if using Supabase).  
@@ -134,7 +158,7 @@ The backend supports PostgreSQL when **`DATABASE_URL`** is set:
 
 ---
 
-## 5. CORS
+## 6. CORS
 
 The backend uses `cors()`. For production, you can restrict origin:
 
@@ -142,16 +166,19 @@ The backend uses `cors()`. For production, you can restrict origin:
 app.use(cors({ origin: process.env.FRONTEND_URL || "https://your-app.vercel.app" }));
 ```
 
-Set `FRONTEND_URL` on the backend host to your Vercel URL (or comma-separated list of allowed origins).
+Set **`FRONTEND_URL`** on the backend (Render) to your exact Vercel URL so CORS allows login and API calls:
+
+- **Render** → your backend service → **Environment** → add: `FRONTEND_URL` = `https://mg-fitness.silk.vercel.app` (or your real Vercel URL, no trailing slash).
+- Multiple origins: `https://app1.vercel.app,https://app2.vercel.app`.
 
 ---
 
-## 6. Summary
+## 7. Summary
 
 | Part      | Where       | What to set / run |
 |-----------|------------|-------------------|
 | Frontend  | Vercel     | Build: `npm run build`, output: `dist`, env: `VITE_API_URL` = backend URL. |
 | Database  | Supabase   | Create project, run `supabase/schema.sql`, copy connection string. |
-| Backend   | Railway / Render | Root: `server`, start: `npm start`, env: `PORT` (+ `DATABASE_URL` if using Supabase). |
+| Backend   | Railway / Render | Root: `server`, start: `npm start`, env: `PORT`, `DATABASE_URL`, `FRONTEND_URL` (your Vercel URL for CORS). |
 
 After deployment, the **frontend** (Vercel) will call the **backend** (Railway/Render). The **database** will be either SQLite on the same server (Option B) or **Supabase** (Option A) once the backend is migrated to PostgreSQL.

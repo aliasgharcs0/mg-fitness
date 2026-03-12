@@ -12,7 +12,13 @@ const cors = require("cors");
 const pool = require("./db");
 
 const app = express();
-app.use(cors());
+const allowedOrigin = process.env.FRONTEND_URL;
+app.use(
+  cors({
+    origin: allowedOrigin ? allowedOrigin.split(",").map((u) => u.trim()) : true,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 function toPg(sql) {
