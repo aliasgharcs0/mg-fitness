@@ -374,20 +374,12 @@ app.get("/api/payments", authMiddleware, asyncHandler(async (req, res) => {
   res.json(rows);
 }));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
-(async function start() {
-  try {
-    await ensurePgSchemaAndSeed();
-  } catch (e) {
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  ensurePgSchemaAndSeed().catch((e) => {
     console.error("PostgreSQL init failed. Is DATABASE_URL set and schema created (see supabase/schema.sql)?", e);
-    process.exit(1);
-  }
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
   });
-})().catch((e) => {
-  console.error(e);
-  process.exit(1);
 });
 
