@@ -55,56 +55,65 @@ export default function LoginPage() {
         </div>
 
         <div className="flex-1 flex items-center justify-center p-6 md:p-8">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-lg">
-            <div className="flex flex-col items-center gap-2 text-center mb-6 md:hidden">
-              <p className="text-sm text-muted-foreground">
-                Sign in with your username and password
-              </p>
-            </div>
-            <div className="hidden md:block mb-6">
-              <h2 className="text-lg font-semibold text-foreground">Sign in</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Enter your username and password to continue
-              </p>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium block text-foreground">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
-                  required
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-colors"
-                />
+          <div className="w-full max-w-md rounded-2xl border border-border overflow-hidden shadow-lg relative">
+            {/* Fade-in background image behind the card */}
+            <div
+              className="absolute inset-0 bg-cover bg-center animate-[fade-in_0.7s_ease-out_forwards]"
+              style={{ backgroundImage: `url(${gymImages.loginHero})` }}
+              aria-hidden
+            />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]" />
+            <div className="relative z-10 p-6">
+              <div className="flex flex-col items-center gap-2 text-center mb-6 md:hidden">
+                <p className="text-sm text-white/90">
+                  Sign in with your username and password
+                </p>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium block text-foreground">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-colors"
-                />
+              <div className="hidden md:block mb-6">
+                <h2 className="text-lg font-semibold text-white">Sign in</h2>
+                <p className="text-xs text-white/80 mt-0.5">
+                  Enter your username and password to continue
+                </p>
               </div>
-              {error && (
-                <p className="text-xs text-destructive font-medium">{error}</p>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-lg bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-amber-600 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
-              >
-                {loading ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium block text-white">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                    required
+                    className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/50 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-colors"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium block text-white">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                    className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/50 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-colors"
+                  />
+                </div>
+                {error && (
+                  <p className="text-xs text-amber-200 font-medium">{error}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-amber-600 disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-black/30"
+                >
+                  {loading ? "Signing in…" : "Sign in"}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
