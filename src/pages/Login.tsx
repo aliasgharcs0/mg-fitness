@@ -62,6 +62,12 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
         </div>
 
+        {/* Plain background behind the sign-in card so the fade sits behind the card */}
+        <div
+          className="absolute inset-0 md:left-1/2 bg-background pointer-events-none z-[1]"
+          aria-hidden
+        />
+
         {/* Left panel – hero content */}
         <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative z-10 min-h-[280px] md:min-h-0">
           <div className="relative z-10 flex flex-col justify-end p-8 lg:p-12 text-white">
