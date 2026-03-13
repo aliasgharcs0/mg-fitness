@@ -39,21 +39,31 @@ export default function LoginPage() {
       </header>
 
       <div className="flex-1 flex flex-col md:flex-row min-h-0 relative overflow-hidden">
-        {/* Full-bleed background: same image fades in behind the entire layout */}
+        {/* Full-bleed background image (fades in on load) */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-[fade-in_0.8s_ease-out_forwards]"
           style={{ backgroundImage: `url(${gymImages.loginHero})` }}
           aria-hidden
         />
-        {/* Soft dark gradient so text and card stay readable */}
+        {/* Image fades out to the left: plain background on left, image visible on right */}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/70"
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background)) 38%, transparent 72%)",
+          }}
           aria-hidden
         />
-
-        {/* Left panel – hero content (unchanged) */}
-        <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative z-10 min-h-[280px] md:min-h-0">
+        {/* Dark overlay on left panel only for hero text readability */}
+        <div
+          className="absolute inset-0 md:w-1/2 lg:w-3/5 pointer-events-none"
+          aria-hidden
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+        </div>
+
+        {/* Left panel – hero content */}
+        <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative z-10 min-h-[280px] md:min-h-0">
           <div className="relative z-10 flex flex-col justify-end p-8 lg:p-12 text-white">
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
               Your strength starts here
@@ -64,15 +74,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right panel – sign-in card: plain center, image fades in from the edges */}
+        {/* Right panel – sign-in card with plain solid background */}
         <div className="flex-1 flex items-center justify-center p-6 md:p-8 relative z-10">
-          <div
-            className="w-full max-w-md rounded-2xl border border-border p-6 shadow-lg"
-            style={{
-              background:
-                "radial-gradient(ellipse 88% 88% at 50% 50%, hsl(var(--card)), transparent 72%)",
-            }}
-          >
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-lg">
             <div className="flex flex-col items-center gap-2 text-center mb-6 md:hidden">
               <p className="text-sm text-muted-foreground">
                 Sign in with your username and password
