@@ -38,23 +38,26 @@ export default function LoginPage() {
         </h1>
       </header>
 
-      <div className="flex-1 flex items-center justify-center min-h-0 relative overflow-hidden">
-        {/* Full background image */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        {/* Left panel – image with hero text */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-[fade-in_0.8s_ease-out_forwards]"
+          className="hidden md:flex md:w-1/2 lg:w-3/5 relative bg-cover bg-center min-h-[280px] md:min-h-0"
           style={{ backgroundImage: `url(${gymImages.loginHero})` }}
-          aria-hidden
-        />
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="relative z-10 flex flex-col justify-end p-8 lg:p-12 text-white">
+            <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
+              Your strength starts here
+            </h2>
+            <p className="text-white/90 text-sm lg:text-base mt-1 max-w-sm">
+              Sign in with your username and password. Members and staff use the same login.
+            </p>
+          </div>
+        </div>
 
-        {/* Centered content: hero text + sign-in card */}
-        <div className="relative z-10 w-full max-w-md mx-auto px-6 flex flex-col items-center gap-6">
-          <p className="text-white text-center text-xl md:text-2xl font-bold drop-shadow-md">
-            Your strength starts here
-          </p>
-          <p className="text-white/90 text-center text-sm -mt-4">
-            Sign in with your username and password. Members and staff use the same login.
-          </p>
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-lg w-full">
+        {/* Right panel – sign-in card on plain background */}
+        <div className="flex-1 flex items-center justify-center p-6 md:p-8 bg-background">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-lg">
             <div className="flex flex-col items-center gap-2 text-center mb-6 md:hidden">
               <p className="text-sm text-muted-foreground">
                 Sign in with your username and password
