@@ -64,9 +64,15 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right panel – sign-in card (solid card) */}
+        {/* Right panel – sign-in card: plain center, image fades in from the edges */}
         <div className="flex-1 flex items-center justify-center p-6 md:p-8 relative z-10">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-lg">
+          <div
+            className="w-full max-w-md rounded-2xl border border-border p-6 shadow-lg"
+            style={{
+              background:
+                "radial-gradient(ellipse 88% 88% at 50% 50%, hsl(var(--card)), transparent 72%)",
+            }}
+          >
             <div className="flex flex-col items-center gap-2 text-center mb-6 md:hidden">
               <p className="text-sm text-muted-foreground">
                 Sign in with your username and password
