@@ -45,12 +45,12 @@ export default function LoginPage() {
           style={{ backgroundImage: `url(${gymImages.loginHero})` }}
           aria-hidden
         />
-        {/* Image fades out to the left: plain background on left, image visible on right */}
+        {/* Image on left, fades to plain on the right (fade is behind the card) */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background)) 38%, transparent 72%)",
+              "linear-gradient(to right, transparent 0%, transparent 40%, hsl(var(--background)) 68%, hsl(var(--background)) 100%)",
           }}
           aria-hidden
         />
@@ -61,12 +61,6 @@ export default function LoginPage() {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
         </div>
-
-        {/* Plain background behind the sign-in card so the fade sits behind the card */}
-        <div
-          className="absolute inset-0 md:left-1/2 bg-background pointer-events-none z-[1]"
-          aria-hidden
-        />
 
         {/* Left panel – hero content */}
         <div className="hidden md:flex md:w-1/2 lg:w-3/5 relative z-10 min-h-[280px] md:min-h-0">
