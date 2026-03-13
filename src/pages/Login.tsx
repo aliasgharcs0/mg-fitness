@@ -50,7 +50,7 @@ export default function LoginPage() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to right, transparent 0%, transparent 40%, hsl(var(--background)) 68%, hsl(var(--background)) 100%)",
+              "linear-gradient(to right, transparent 0%, transparent 55%, hsl(var(--background)) 80%, hsl(var(--background)) 100%)",
           }}
           aria-hidden
         />
