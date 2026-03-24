@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 
 type User = {
   id: number;
+  authUserId: string;
   username: string;
   role: "admin" | "member";
   name: string;
@@ -10,9 +11,9 @@ type User = {
 
 type AuthContextValue = {
   user: User | null;
-  token: string | null;
+  token: string | null; // Supabase access token
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -23,55 +24,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("mg_fitness_auth");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as { token: string; user: User };
-        setUser(parsed.user);
-        setToken(parsed.token);
-      } catch {
-        localStorage.removeItem("mg_fitness_auth");
-      }
+  const loadUserFromSession = async (accessToken: string | null) => {
+    if (!accessToken) {
+      setUser(null);
+      setToken(null);
+      return;
     }
-    setLoading(false);
+
+    const {
+      data: { user: authUser },
+      error: authErr,
+    } = await supabase.auth.getUser(accessToken);
+    if (authErr || !authUser) {
+      setUser(null);
+      setToken(null);
+      return;
+    }
+
+    const { data: member, error: memberErr } = await supabase
+      .from("members")
+      .select("id, auth_user_id, username, role, name")
+      .eq("auth_user_id", authUser.id)
+      .maybeSingle();
+
+    if (memberErr || !member) {
+      setUser(null);
+      setToken(null);
+      throw new Error("Profile not found. Ask admin to link this account in members.auth_user_id.");
+    }
+
+    setUser({
+      id: member.id,
+      authUserId: member.auth_user_id,
+      username: member.username ?? authUser.email ?? "",
+      role: (member.role ?? "member") as "admin" | "member",
+      name: member.name ?? authUser.email ?? "Member",
+    });
+    setToken(accessToken);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const boot = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!mounted) return;
+      try {
+        await loadUserFromSession(session?.access_token ?? null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    boot();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, session) => {
+      await loadUserFromSession(session?.access_token ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (username: string, password: string) => {
-    let res: Response;
-    try {
-      res = await apiFetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
-      });
-    } catch (err: any) {
-      throw new Error("Cannot reach server. Is it running? (npm start in the server folder)");
-    }
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error((data as { error?: string }).error || "Login failed");
-    }
-    const loginData = data as { token: string; user: User };
-    setUser(loginData.user);
-    setToken(loginData.token);
-    localStorage.setItem("mg_fitness_auth", JSON.stringify(loginData));
+  const login = async (identifier: string, password: string) => {
+    const raw = identifier.trim().toLowerCase();
+    const email = raw.includes("@") ? raw : `${raw}@mgfitness.local`;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: password.trim(),
+    });
+    if (error) throw new Error(error.message || "Login failed");
+    await loadUserFromSession(data.session?.access_token ?? null);
   };
 
   const logout = async () => {
-    if (token) {
-      try {
-        await apiFetch("/api/logout", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } catch {
-        // ignore
-      }
-    }
+    await supabase.auth.signOut();
     setUser(null);
     setToken(null);
-    localStorage.removeItem("mg_fitness_auth");
   };
 
   return (

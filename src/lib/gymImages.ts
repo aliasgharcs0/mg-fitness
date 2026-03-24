@@ -1,23 +1,41 @@
 /** Gym/fitness images from Unsplash (Unsplash License). */
 
-const U = "https://images.unsplash.com";
+// Local (downloaded) images under `public/images/`
+// This avoids relying on hotlinking to Unsplash.
+const U = "";
 
 export const gymImages = {
   /** Login hero: clean gym interior */
-  loginHero: `${U}/photo-1583454110551-21f2fa2afe61?w=1200&q=80`,
+  loginHero: "/images/loginHero.jpg",
   /** Dashboard banner: gym floor / training space */
-  dashboardBanner: `${U}/photo-1534438327276-14e5300c3a48?w=1400&q=80`,
+  dashboardBanner: "/images/dashboardBanner.jpg",
   /** Members: group training / teamwork */
-  membersBanner: `${U}/photo-1571019614242-c5c5dee9f50b?w=1200&q=80`,
+  membersBanner: "/images/membersBanner.jpg",
   /** Sidebar: weights / motivation */
-  sidebarAccent: `${U}/photo-1549060279-7e168fcee0c2?w=600&q=80`,
+  sidebarAccent: "/images/sidebarAccent.jpg",
   /** Programs: workout / training */
-  programs: `${U}/photo-1517836357463-d25dfeac3438?w=800&q=80`,
+  programs: "/images/programs.jpg",
   /** Diet: healthy food / nutrition */
-  diet: `${U}/photo-1512621776951-a57141f2eefd?w=800&q=80`,
+  diet: "/images/diet.jpg",
+  /** Diet Plans hero: performance nutrition + keto context */
+  dietPlansHero: "/images/dietPlansHero.jpg",
+  /** Diet plan category thumbnails */
+  dietThumbBulking: "/images/dietThumbBulking.jpg",
+  dietThumbKeto: "/images/dietThumbKeto.jpg",
+  dietThumbProtein: "/images/dietThumbProtein.jpg",
+  dietThumbSupplements: "/images/dietThumbSupplements.jpg",
+  /** Generic gym interior hero */
+  gymHeroMultan: "/images/gymHeroMultan.jpg",
   /** Medical: sports medicine / recovery */
-  medical: `${U}/photo-1576091160550-2173dba999ef?w=800&q=80`,
+  medical: "/images/medical.jpg",
   /** Payments: finance / billing */
-  payments: `${U}/photo-1554224155-6726b3ff858f?w=800&q=80`,
+  payments: "/images/payments.jpg",
+  /** Dynamic app backgrounds by section */
+  bgDashboard: "/images/dashboardBanner.jpg",
+  bgMembers: "/images/membersBanner.jpg",
+  bgPrograms: "/images/programs.jpg",
+  bgDiet: "/images/dietPlansHero.jpg",
+  bgMedical: "/images/medical.jpg",
+  bgPayments: "/images/payments.jpg",
 } as const;
 

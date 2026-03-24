@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dumbbell,
-  LayoutDashboard,
   Users,
   Activity,
   HeartPulse,
@@ -12,8 +11,7 @@ import {
   Plus,
   UserRoundSearch,
   BadgeDollarSign,
-  Menu,
-  LogOut,
+  Layers,
   Trash2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -45,12 +43,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
@@ -59,11 +51,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import ThemeToggle from "@/components/ThemeToggle";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { gymImages } from "@/lib/gymImages";
+import { cn } from "@/lib/utils";
+import Navbar from "@/components/Navbar";
 
 const PLAN_OPTIONS = ["Weight Loss", "Weight Gain", "Custom"] as const;
 const LEVEL_OPTIONS = ["Beginner", "Intermediate", "Advanced"] as const;
@@ -128,20 +121,23 @@ type Payment = {
   note: string;
 };
 
+/** Smoother easing with a softer settle for calmer motion */
+const EASE_SMOOTH = [0.22, 0.08, 0.2, 1] as const;
+
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.06 },
+    transition: { staggerChildren: 0.055, delayChildren: 0.06 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 6 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.25 },
+    transition: { duration: 0.34, ease: EASE_SMOOTH },
   },
 };
 
@@ -151,12 +147,42 @@ const statusStyles: Record<MembershipStatus, string> = {
   pending: "bg-amber-500/10 text-amber-500 border-amber-500/30",
 };
 
+const pageEnter = { duration: 0.36, ease: EASE_SMOOTH } as const;
+const pageExit = { duration: 0.24, ease: EASE_SMOOTH } as const;
+
 const pageLoad = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
-  transition: { duration: 0.3, ease: "easeOut" },
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: pageEnter },
+  exit: { opacity: 0, y: -5, transition: pageExit },
 };
+
+/** Simulated growth sparkline for active memberships metric */
+function MembershipSparkline({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 104 32"
+      fill="none"
+      className={cn("h-7 w-[5.5rem] shrink-0 text-cyberLime/85", className)}
+      aria-hidden
+    >
+      <path
+        d="M2 26 C12 22, 14 24, 22 16 S 36 18, 46 10 S 58 14, 68 6 S 82 12, 100 4"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.35"
+      />
+      <path
+        d="M2 26 C12 22, 14 24, 22 16 S 36 18, 46 10 S 58 14, 68 6 S 82 12, 100 4"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function ordinal(n: number) {
   const s = ["th", "st", "nd", "rd"];
@@ -999,12 +1025,34 @@ export default function GymDashboard() {
     [payments],
   );
 
+  const tabBackground = useMemo(() => {
+    const map: Record<TabId, string> = {
+      dashboard: gymImages.bgDashboard,
+      members: gymImages.bgMembers,
+      contacts: gymImages.bgMembers,
+      programs: gymImages.bgPrograms,
+      diet: gymImages.bgDiet,
+      medical: gymImages.bgMedical,
+      payments: gymImages.bgPayments,
+    };
+    return map[activeTab] ?? gymImages.bgDashboard;
+  }, [activeTab]);
+
+  const sectionHeaderCard = (eyebrow: string, title: string, subtitle?: string) => (
+    <div className="relative overflow-hidden rounded-xl border border-white/15 bg-black/35 px-4 py-3 backdrop-blur-md md:px-5">
+      <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#FF4D00] to-[#FFC300]" />
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFC300]">{eyebrow}</p>
+      <h2 className="font-headings text-sm font-extrabold uppercase tracking-wide text-white md:text-base">{title}</h2>
+      {subtitle ? <p className="mt-0.5 text-[11px] text-white/65">{subtitle}</p> : null}
+    </div>
+  );
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Dumbbell className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-sm bg-primary/15 flex items-center justify-center border border-cyberLime/25">
+            <Dumbbell className="h-5 w-5 text-cyberLime drop-shadow-[0_0_10px_rgba(204,255,0,0.45)]" />
           </div>
           <p className="text-sm text-muted-foreground">Loading…</p>
         </div>
@@ -1014,156 +1062,78 @@ export default function GymDashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <p className="text-sm text-muted-foreground">Redirecting to login…</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background flex flex-col md:flex-row">
-      <aside className="w-full md:w-64 bg-sidebar border-b md:border-b-0 md:border-r border-sidebar-border flex flex-col flex-shrink-0">
-        <div className="p-4 md:p-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
-            <Dumbbell className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-extrabold text-sidebar-foreground leading-tight text-sm">
-              MG FITNESS
-            </h2>
-            <p className="text-[10px] font-semibold text-sidebar-foreground/50 uppercase tracking-widest">
-              Gym Management
-            </p>
-          </div>
-        </div>
+    <main className="relative min-h-screen bg-transparent">
+      <Navbar
+        activeTab={activeTab === "contacts" ? "members" : activeTab}
+        onTabChange={setActiveTab as (tab: "dashboard" | "members" | "programs" | "diet" | "medical" | "payments") => void}
+        userName={user.name}
+        isAdmin={user.role === "admin"}
+        onLogout={logout}
+      />
 
-        <nav className="flex-1 px-3 py-2 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible scrollbar-none">
-          {user?.role === "admin" && (
-            <>
-              <button
-                onClick={() => setActiveTab("dashboard")}
-                className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === "dashboard" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                <span>Dashboard</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("members")}
-                className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === "members" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
-              >
-                <Users className="h-4 w-4" />
-                <span>Members</span>
-              </button>
-              <button
-                onClick={() => setActiveTab("contacts")}
-                className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeTab === "contacts" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
-              >
-                <Phone className="h-4 w-4" />
-                <span>Contact Info</span>
-              </button>
-            </>
-          )}
-          <button
-            onClick={() => setActiveTab("programs")}
-            className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === "programs" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-            }`}
+      <section className="relative min-h-screen overflow-y-auto px-4 pb-6 pt-20 md:px-8 md:pt-24">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={tabBackground}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
           >
-            <Activity className="h-4 w-4" />
-            <span>Programs</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("diet")}
-            className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === "diet" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-            }`}
-          >
-            <HeartPulse className="h-4 w-4" />
-            <span>Diet</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("medical")}
-            className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === "medical" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-            }`}
-          >
-            <Stethoscope className="h-4 w-4" />
-            <span>Medical & Injury</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("payments")}
-            className={`flex items-center gap-2 md:gap-3 rounded-lg px-3 md:px-3.5 py-2 md:py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === "payments" ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
-            }`}
-          >
-            <CreditCard className="h-4 w-4" />
-            <span>Payments</span>
-          </button>
-        </nav>
-
-        <div className="p-3 mt-auto hidden md:flex flex-col gap-2 border-t border-sidebar-border">
-          <div className="rounded-lg overflow-hidden h-16 mb-2 border border-sidebar-border">
-            <img
-              src={gymImages.sidebarAccent}
-              alt=""
-              className="w-full h-full object-cover opacity-80"
-            />
-          </div>
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-        </div>
-      </aside>
-
-      <section className="flex-1 p-5 md:p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
+            <img src={tabBackground} alt="" className="h-full w-full object-cover opacity-[0.18]" />
+          </motion.div>
+        </AnimatePresence>
+        <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-4 md:space-y-6">
           <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="min-h-[4rem]">
+            <div className="min-h-[3.5rem]">
               <motion.p
                 key={`${activeTab}-badge`}
-                initial={{ opacity: 0, y: -6 }}
+                initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className="text-xs font-semibold uppercase tracking-widest text-accent mb-1"
+                transition={{ duration: 0.28, ease: EASE_SMOOTH }}
+                className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyberLime/90"
               >
                 MG Fitness · {pageHeader.badge}
               </motion.p>
               <motion.h1
                 key={`${activeTab}-title`}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: 0.05 }}
-                className="text-2xl font-extrabold text-foreground"
+                transition={{ duration: 0.34, delay: 0.06, ease: EASE_SMOOTH }}
+                className="font-headings text-xl font-extrabold uppercase tracking-wide text-foreground md:text-2xl"
               >
                 {pageHeader.title}
               </motion.h1>
               <motion.p
                 key={`${activeTab}-desc`}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: 0.1 }}
-                className="text-sm text-muted-foreground mt-1"
+                transition={{ duration: 0.34, delay: 0.1, ease: EASE_SMOOTH }}
+                className="mt-1 text-sm text-muted-foreground"
               >
                 {pageHeader.description}
               </motion.p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {user?.role === "admin" && activeTab === "members" && (
                 <Input
                   placeholder="Search members…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-48 md:w-64"
+                  className="w-48 md:w-56"
                 />
               )}
               {user?.role === "admin" && (activeTab === "dashboard" || activeTab === "members") && (
                 <Button
+                  variant="cta"
                   className="gap-1.5"
                   onClick={() => {
                     setActiveTab("members");
@@ -1174,90 +1144,88 @@ export default function GymDashboard() {
                   Add Member
                 </Button>
               )}
-              {user && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <span className="hidden sm:inline truncate max-w-[140px]">{user.name}</span>
-                      <Menu className="h-4 w-4 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-[10rem]">
-                    <DropdownMenuItem onClick={() => logout()} className="cursor-pointer gap-2">
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
           </header>
 
           {loading && (
-            <div className="text-sm text-muted-foreground">Loading data from local database…</div>
+            <div className="text-sm text-muted-foreground">Loading data from Supabase…</div>
           )}
           {error && (
             <div className="text-sm text-destructive">
-              Failed to load from local database: {error}
+              Failed to load from Supabase: {error}
             </div>
           )}
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
           {activeTab === "dashboard" && user?.role === "admin" && (
             <motion.div
               key="dashboard"
               {...pageLoad}
-              className="w-full space-y-6"
+              className="w-full space-y-4 md:space-y-5"
             >
-            <div
-              className="relative h-48 md:h-64 rounded-xl overflow-hidden bg-muted"
-              style={{ backgroundImage: `url(${gymImages.dashboardBanner})`, backgroundSize: "cover", backgroundPosition: "center" }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
-                <p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">MG Fitness</p>
-                <h2 className="text-lg md:text-xl font-bold mt-0.5">Overview at a glance</h2>
-              </div>
-            </div>
+            {sectionHeaderCard("Welcome", "Command center · overview", "Live metrics below — stay locked in.")}
             <motion.div
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid gap-4 md:grid-cols-4"
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4"
             >
               <motion.div variants={item}>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
+                <Card className="relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md shadow-none">
+                  <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#FF4D00] to-[#FFC300]" />
+                  <div className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.14),transparent_68%)]" />
+                  <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-[11px] font-extrabold uppercase tracking-wider text-cyberLime/90">Total Members</CardTitle>
+                    <Users className="h-4 w-4 text-cyberLime drop-shadow-[0_0_8px_rgba(204,255,0,0.5)]" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{metrics.totalMembers}</div>
-                    <p className="text-xs text-muted-foreground">All registered members</p>
+                  <CardContent className="relative">
+                    <div className="text-3xl font-extrabold tracking-widest text-white md:text-4xl">
+                      {metrics.totalMembers}
+                    </div>
+                    <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      All registered
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
               <motion.div variants={item}>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Active Memberships</CardTitle>
-                    <Activity className="h-4 w-4 text-emerald-500" />
+                <Card className="relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md shadow-none">
+                  <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#FF4D00] to-[#FFC300]" />
+                  <div className="pointer-events-none absolute -right-10 -top-14 h-44 w-44 rounded-full bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.16),transparent_70%)]" />
+                  <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-[11px] font-extrabold uppercase tracking-wider text-cyberLime/90">Active Members</CardTitle>
+                    <Activity className="h-4 w-4 text-cyberLime drop-shadow-[0_0_8px_rgba(204,255,0,0.5)]" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{metrics.activeMemberships}</div>
-                    <p className="text-xs text-muted-foreground">Currently training members</p>
+                  <CardContent className="relative">
+                    <div className="flex items-end justify-between gap-2">
+                      <div>
+                        <div className="text-3xl font-extrabold tracking-widest text-white md:text-4xl">
+                          {metrics.activeMemberships}
+                        </div>
+                        <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Currently training
+                        </p>
+                      </div>
+                      <MembershipSparkline className="opacity-90" />
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
-              <motion.div variants={item}>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">New Registrations</CardTitle>
-                    <UserRoundSearch className="h-4 w-4 text-accent" />
+              <motion.div variants={item} className="sm:col-span-2 md:col-span-1">
+                <Card className="relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md shadow-none">
+                  <div className="absolute left-0 top-0 h-1 w-full bg-gradient-to-r from-[#FF4D00] to-[#FFC300]" />
+                  <div className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.12),transparent_68%)]" />
+                  <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-[11px] font-extrabold uppercase tracking-wider text-cyberLime/90">New Registrations</CardTitle>
+                    <UserRoundSearch className="h-4 w-4 text-cyberLime drop-shadow-[0_0_8px_rgba(204,255,0,0.5)]" />
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{metrics.newRegistrations}</div>
-                    <p className="text-xs text-muted-foreground">Joined this month</p>
+                  <CardContent className="relative">
+                    <div className="text-3xl font-extrabold tracking-widest text-white md:text-4xl">
+                      {metrics.newRegistrations}
+                    </div>
+                    <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Joined this month
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -1267,12 +1235,9 @@ export default function GymDashboard() {
 
           {activeTab === "members" && user?.role === "admin" && (
             <motion.div key="members" {...pageLoad} className="space-y-4">
-              <div className="relative h-40 md:h-52 rounded-xl overflow-hidden bg-muted" style={{ backgroundImage: `url(${gymImages.membersBanner})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">Team</p><h2 className="text-base font-bold">Members</h2></div>
-              </div>
+              {sectionHeaderCard("Team", "Members")}
               {!showAddMember && (
-                <Button onClick={() => setShowAddMember(true)} className="gap-1.5">
+                <Button variant="cta" onClick={() => setShowAddMember(true)} className="gap-1.5">
                   <Plus className="h-4 w-4" />
                   Add Member
                 </Button>
@@ -1402,7 +1367,7 @@ export default function GymDashboard() {
                     </TableHeader>
                     <TableBody>
                       {filteredMembers.map((m) => (
-                        <TableRow key={m.id}>
+                        <TableRow key={m.id} className="odd:bg-[#FF4D00]/[0.03] even:bg-[#FFC300]/[0.02]">
                           <TableCell className="font-medium align-top">
                             <div className="whitespace-normal break-words">{m.name}</div>
                             {m.role === "admin" && <Badge className="ml-1 text-[10px]">Admin</Badge>}
@@ -1700,10 +1665,7 @@ export default function GymDashboard() {
 
           {activeTab === "contacts" && user?.role === "admin" && (
             <motion.div key="contacts" {...pageLoad} className="space-y-4">
-              <div className="relative h-40 md:h-52 rounded-xl overflow-hidden bg-muted" style={{ backgroundImage: `url(${gymImages.sidebarAccent})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">Contacts</p><h2 className="text-base font-bold">Contact Information</h2></div>
-              </div>
+              {sectionHeaderCard("Contacts", "Contact information")}
 
               <Card>
                 <CardHeader>
@@ -1725,7 +1687,7 @@ export default function GymDashboard() {
                       {members
                         .filter((m) => m.role !== "admin")
                         .map((m) => (
-                          <TableRow key={m.id}>
+                          <TableRow key={m.id} className="odd:bg-[#FF4D00]/[0.03] even:bg-[#FFC300]/[0.02]">
                             <TableCell className="font-medium whitespace-normal break-words">{m.name}</TableCell>
                             <TableCell className="whitespace-normal break-words">
                               {editingContactId === m.id ? (
@@ -1779,10 +1741,7 @@ export default function GymDashboard() {
 
           {activeTab === "programs" && (
             <motion.div key="programs" {...pageLoad} className="space-y-4">
-              <div className="relative h-40 md:h-52 rounded-xl overflow-hidden bg-muted" style={{ backgroundImage: `url(${gymImages.programs})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">Training</p><h2 className="text-base font-bold">Programs</h2></div>
-              </div>
+              {sectionHeaderCard("Training", "Programs")}
               {user?.role === "admin" && (
                 <>
                   {showAddProgram ? (
@@ -1881,7 +1840,10 @@ export default function GymDashboard() {
               {user?.role !== "admin" && programs.filter((p) => p.name === members[0]?.membership).length === 0 && (
                 <Card>
                   <CardContent className="py-8 text-center text-muted-foreground">
-                    No program assigned yet. Contact admin.
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#FF4D00]/15 text-[#FF9A00]">
+                      <Layers className="h-5 w-5" />
+                    </div>
+                    No programs found. Contact admin to assign one.
                   </CardContent>
                 </Card>
               )}
@@ -1890,10 +1852,7 @@ export default function GymDashboard() {
 
           {activeTab === "diet" && (
             <motion.div key="diet" {...pageLoad} className="space-y-4">
-              <div className="relative h-40 md:h-52 rounded-xl overflow-hidden bg-muted" style={{ backgroundImage: `url(${gymImages.diet})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">Nutrition</p><h2 className="text-base font-bold">Diet Plans</h2></div>
-              </div>
+              {sectionHeaderCard("Nutrition", "Personalized performance nutrition", "Fuel your potential · diet plans")}
               {user?.role === "admin" ? (
                 <div className="space-y-4">
                   {showAddDietPlan ? (
@@ -1957,7 +1916,7 @@ export default function GymDashboard() {
                       </CardContent>
                     </Card>
                   ) : (
-                    <Button onClick={() => setShowAddDietPlan(true)} className="gap-1.5">
+                    <Button variant="cta" onClick={() => setShowAddDietPlan(true)} className="gap-1.5">
                       <Plus className="h-4 w-4" />
                       Add Diet Plan
                     </Button>
@@ -1973,8 +1932,28 @@ export default function GymDashboard() {
                     {dietPlans.map((d) => (
                       <div
                         key={d.id}
-                        className="flex items-start justify-between rounded-lg border border-border bg-muted/40 px-3 py-2"
+                        className="flex items-start gap-3 rounded-sm border border-white/10 bg-stealth-surface/50 px-3 py-3 backdrop-blur-md transition-[border-color,box-shadow] duration-150 ease-out hover:border-cyberLime/50 hover:shadow-[0_0_0_1px_rgba(204,255,0,0.2),0_0_24px_rgba(204,255,0,0.12)]"
                       >
+                        {(() => {
+                          const goal = (d.goal ?? "").toLowerCase();
+                          const thumb =
+                            goal.includes("gain")
+                              ? gymImages.dietThumbBulking
+                              : goal.includes("loss")
+                                ? gymImages.dietThumbKeto
+                                : gymImages.dietThumbProtein;
+                          return (
+                            <div className="relative h-[84px] w-[92px] shrink-0 rounded-sm border border-white/10 overflow-hidden bg-black/50">
+                              <img
+                                src={thumb}
+                                alt=""
+                                className="h-full w-full object-cover opacity-90"
+                              />
+                              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.82))]" />
+                            </div>
+                          );
+                        })()}
+
                         {editingDietId === d.id && editDietForm ? (
                           <div className="flex-1 space-y-3 min-w-0">
                             <div className="grid gap-2 sm:grid-cols-2">
@@ -2007,20 +1986,38 @@ export default function GymDashboard() {
                           </div>
                         ) : (
                           <>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold">{d.name}</span>
-                                <Badge variant="outline" className="text-[10px]">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-extrabold uppercase tracking-wider text-foreground">
+                                  {d.name}
+                                </span>
+                                <Badge variant="outline" className="text-[10px] border-cyberLime/40 text-cyberLime">
                                   {d.goal}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                ~{d.calories} kcal · {d.notes}
-                              </p>
+                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <p className="text-xs text-muted-foreground">
+                                  ~{d.calories} kcal
+                                </p>
+                                {d.notes ? (
+                                  <p className="text-xs text-muted-foreground truncate max-w-[260px]">
+                                    {d.notes}
+                                  </p>
+                                ) : null}
+                              </div>
                             </div>
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="outline" onClick={() => { setEditingDietId(d.id); setEditDietForm({ ...d }); }}>Edit</Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDeleteDietPlan(d.id)}>Delete</Button>
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="outline" className="border-cyberLime/40 hover:border-cyberLime/80" onClick={() => { setEditingDietId(d.id); setEditDietForm({ ...d }); }}>
+                                  Edit
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleDeleteDietPlan(d.id)}>
+                                  Delete
+                                </Button>
+                              </div>
+                              <div className="text-[10px] font-extrabold uppercase tracking-widest text-cyberLime/70">
+                                Diet card
+                              </div>
                             </div>
                           </>
                         )}
@@ -2086,10 +2083,7 @@ export default function GymDashboard() {
 
           {activeTab === "medical" && (
             <motion.div key="medical" {...pageLoad} className="space-y-4">
-              <div className="relative h-40 md:h-52 rounded-xl overflow-hidden bg-muted" style={{ backgroundImage: `url(${gymImages.medical})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">Health</p><h2 className="text-base font-bold">Medical &amp; Injury History</h2></div>
-              </div>
+              {sectionHeaderCard("Health", "Medical & injury")}
               {user?.role === "admin" ? (
                 <Card>
                   <CardHeader>
@@ -2174,10 +2168,7 @@ export default function GymDashboard() {
 
           {activeTab === "payments" && (
             <motion.div key="payments" {...pageLoad} className="space-y-4">
-              <div className="relative h-40 md:h-52 rounded-xl overflow-hidden bg-muted" style={{ backgroundImage: `url(${gymImages.payments})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-widest text-yellow-300">Billing</p><h2 className="text-base font-bold">Payments Pending</h2></div>
-              </div>
+              {sectionHeaderCard("Billing", "Payments pending")}
               {user?.role === "admin" ? (
                 <Card>
                   <CardHeader>
@@ -2201,7 +2192,7 @@ export default function GymDashboard() {
                           .filter((m) => m.balance > 0)
                           .sort((a, b) => (a.paymentDay ?? 1) - (b.paymentDay ?? 1))
                           .map((m) => (
-                            <TableRow key={m.id}>
+                            <TableRow key={m.id} className="odd:bg-[#FF4D00]/[0.03] even:bg-[#FFC300]/[0.02]">
                               <TableCell className="font-medium">{m.name}</TableCell>
                               <TableCell>{ordinal(m.paymentDay ?? 1)} of each month</TableCell>
                               <TableCell className="text-right">Rs. {m.balance.toLocaleString()}</TableCell>
