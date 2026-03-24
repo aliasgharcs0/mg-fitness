@@ -35,10 +35,12 @@ async function getCurrentUser(): Promise<CurrentUser | null> {
     .eq("auth_user_id", user.id)
     .maybeSingle();
   if (!member) return null;
+  const roleRaw = String(member.role ?? "member").toLowerCase();
+  const role: "admin" | "member" = roleRaw === "admin" ? "admin" : "member";
   return {
     authUserId: user.id,
     memberId: member.id,
-    role: (member.role ?? "member") as "admin" | "member",
+    role,
   };
 }
 

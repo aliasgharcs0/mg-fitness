@@ -19,46 +19,90 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  try {
+    return (await Promise.race([promise, timeout])) as T;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadUserFromSession = async (accessToken: string | null) => {
+  const loadUserFromSession = async (accessToken: string | null, authUserId?: string) => {
     if (!accessToken) {
       setUser(null);
       setToken(null);
       return;
     }
 
-    const {
-      data: { user: authUser },
-      error: authErr,
-    } = await supabase.auth.getUser(accessToken);
-    if (authErr || !authUser) {
+    let resolvedAuthUserId = authUserId;
+    if (!resolvedAuthUserId) {
+      const {
+        data: { user: authUser },
+        error: authErr,
+      } = await withTimeout(
+        supabase.auth.getUser(accessToken),
+        8000,
+        "Timed out while validating session with Supabase Auth.",
+      );
+      if (authErr || !authUser) {
+        setUser(null);
+        setToken(null);
+        return;
+      }
+      resolvedAuthUserId = authUser.id;
+    }
+
+    if (!resolvedAuthUserId) {
       setUser(null);
       setToken(null);
       return;
     }
 
-    const { data: member, error: memberErr } = await supabase
+    const controller = new AbortController();
+    const query = supabase
       .from("members")
       .select("id, auth_user_id, username, role, name")
-      .eq("auth_user_id", authUser.id)
-      .maybeSingle();
+      .eq("auth_user_id", resolvedAuthUserId)
+      .maybeSingle()
+      .abortSignal(controller.signal);
+    const { data: member, error: memberErr } = await withTimeout(
+      query,
+      8000,
+      "Timed out while loading member profile from Supabase.",
+    );
 
-    if (memberErr || !member) {
+    if (memberErr) {
       setUser(null);
       setToken(null);
-      throw new Error("Profile not found. Ask admin to link this account in members.auth_user_id.");
+      throw new Error(memberErr.message || "Failed to load member profile from Supabase.");
     }
+    if (!member) {
+      setUser(null);
+      setToken(null);
+      await supabase.auth.signOut();
+      throw new Error(
+        "Login succeeded but no linked member profile found. Link members.auth_user_id to auth.users.id in Supabase.",
+      );
+    }
+
+    const roleRaw = String(member.role ?? "member").toLowerCase();
+    const role: "admin" | "member" = roleRaw === "admin" ? "admin" : "member";
 
     setUser({
       id: member.id,
       authUserId: member.auth_user_id,
-      username: member.username ?? authUser.email ?? "",
-      role: (member.role ?? "member") as "admin" | "member",
-      name: member.name ?? authUser.email ?? "Member",
+      username: member.username ?? "",
+      role,
+      name: member.name ?? "Member",
     });
     setToken(accessToken);
   };
@@ -66,20 +110,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
     const boot = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!mounted) return;
       try {
-        await loadUserFromSession(session?.access_token ?? null);
+        const {
+          data: { session },
+        } = await withTimeout(
+          supabase.auth.getSession(),
+          8000,
+          "Timed out while restoring session from Supabase.",
+        );
+        if (!mounted) return;
+        await loadUserFromSession(session?.access_token ?? null, session?.user?.id);
+      } catch {
+        if (mounted) {
+          setUser(null);
+          setToken(null);
+        }
       } finally {
-        if (mounted) setLoading(false);
+        // Always clear loading so Strict Mode / slow first boot cannot leave the UI stuck on "Loading…"
+        setLoading(false);
       }
     };
     boot();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, session) => {
-      await loadUserFromSession(session?.access_token ?? null);
+      try {
+        await loadUserFromSession(session?.access_token ?? null, session?.user?.id);
+      } catch {
+        if (mounted) {
+          setUser(null);
+          setToken(null);
+        }
+      }
     });
 
     return () => {
@@ -91,12 +152,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (identifier: string, password: string) => {
     const raw = identifier.trim().toLowerCase();
     const email = raw.includes("@") ? raw : `${raw}@mgfitness.local`;
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: password.trim(),
-    });
+    const { data, error } = await withTimeout(
+      supabase.auth.signInWithPassword({
+        email,
+        password: password.trim(),
+      }),
+      12000,
+      "Supabase login request timed out.",
+    );
     if (error) throw new Error(error.message || "Login failed");
-    await loadUserFromSession(data.session?.access_token ?? null);
+    try {
+      await loadUserFromSession(data.session?.access_token ?? null, data.user?.id);
+    } catch (err) {
+      await supabase.auth.signOut();
+      throw err;
+    }
   };
 
   const logout = async () => {

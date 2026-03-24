@@ -335,7 +335,14 @@ export default function GymDashboard() {
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (!token) return;
+    if (authLoading) return;
+    if (!user || !token) {
+      setLoading(false);
+    }
+  }, [authLoading, user, token]);
+
+  useEffect(() => {
+    if (!token || !user) return;
     const load = async () => {
       try {
         setLoading(true);
