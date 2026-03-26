@@ -1095,7 +1095,7 @@ export default function GymDashboard() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
           >
-            <img src={tabBackground} alt="" className="h-full w-full object-cover opacity-[0.18]" />
+            <img src={tabBackground} alt="" className="h-full w-full object-cover opacity-[0.26]" />
           </motion.div>
         </AnimatePresence>
         <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-4 md:space-y-6">
