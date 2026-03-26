@@ -34,7 +34,8 @@ Deno.serve(async (req) => {
     .select("id, role")
     .eq("auth_user_id", authUserData.user.id)
     .maybeSingle();
-  if (!me || me.role !== "admin") return res({ error: "Admin only" }, 403);
+  const meRole = String(me?.role ?? "").toLowerCase();
+  if (!me || meRole !== "admin") return res({ error: "Admin only" }, 403);
 
   const body = (await req.json().catch(() => ({}))) as Json;
   const action = String(body.action ?? "");
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
     const insertRow: Json = {
       auth_user_id: createdAuth.user.id,
       username,
-      role: String(member.role ?? "member"),
+      role: String(member.role ?? "member").toLowerCase() === "admin" ? "admin" : "member",
       name,
       email: String(member.email ?? ""),
       phone: String(member.phone ?? ""),
@@ -98,7 +99,7 @@ Deno.serve(async (req) => {
       .eq("id", memberId)
       .maybeSingle();
     if (!existing) return res({ error: "Member not found" }, 404);
-    if (existing.role === "admin") return res({ error: "Cannot delete admin" }, 403);
+    if (String(existing.role ?? "").toLowerCase() === "admin") return res({ error: "Cannot delete admin" }, 403);
 
     await admin.from("payments").delete().eq("member_id", memberId);
     await admin.from("members").delete().eq("id", memberId);

@@ -57,6 +57,18 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   const id = parts[1] ? Number(parts[1]) : null;
   const body = toBody(options.body);
   const me = await getCurrentUser();
+  const authHeaderFromCaller =
+    (options.headers instanceof Headers
+      ? options.headers.get("Authorization") ?? options.headers.get("authorization")
+      : (options.headers as Record<string, string> | undefined)?.Authorization ??
+        (options.headers as Record<string, string> | undefined)?.authorization) ?? null;
+  const callerJwt = authHeaderFromCaller?.replace(/^Bearer\s+/i, "")?.trim() || null;
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const sessionJwt = session?.access_token ?? null;
+  const jwt = callerJwt || sessionJwt;
+  const authHeaderForFunctions = jwt ? `Bearer ${jwt}` : null;
 
   // /api/me
   if (base === "me" && method === "GET") {
@@ -97,7 +109,10 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
         action: "create_member",
         member: body,
       };
-      const { data, error } = await supabase.functions.invoke("admin-ops", { body: payload });
+      const { data, error } = await supabase.functions.invoke("admin-ops", {
+        body: payload,
+        headers: authHeaderForFunctions ? { Authorization: authHeaderForFunctions } : undefined,
+      });
       if (error || data?.error) return json({ error: data?.error ?? error?.message ?? "Failed to create member" }, 400);
       return json(data, 201);
     }
@@ -107,6 +122,7 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
         if (me.role !== "admin") return json({ error: "Admin only" }, 403);
         const { data, error } = await supabase.functions.invoke("admin-ops", {
           body: { action: "delete_member", member_id: id },
+          headers: authHeaderForFunctions ? { Authorization: authHeaderForFunctions } : undefined,
         });
         if (error || data?.error) return json({ error: data?.error ?? error?.message ?? "Failed to delete member" }, 400);
         return json({ ok: true });
